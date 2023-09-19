@@ -21,6 +21,7 @@ OBJS = \
 	centry.o \
 	main.o \
 	kernel_vec.o \
+	trap.o \
 
 entry.o: entry.s
 	${CC} entry.s -O0 -c -o entry.o ${CFLAGS}
@@ -34,7 +35,10 @@ kernel_vec.o: kernel_vec.s
 main.o: main.c
 	${CC} main.c -O0 -c -o main.o ${CFLAGS}
 
-build: entry.o centry.o kernel_vec.o main.o
+trap.o: trap.c
+	${CC} trap.c -O0 -c -o trap.o ${CFLAGS}
+
+build: entry.o centry.o kernel_vec.o main.o trap.o
 	${LD} ${OBJS} -o ${TARGET_NAME} -T${SRC_LINKER}
 	${OBJDUMP} -S ${TARGET_NAME} > kernel.asm
 

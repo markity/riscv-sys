@@ -6,8 +6,6 @@ extern void setup_timer();
 
 char kernel_stack[4096];
 
-uint64 systick = 0;
-
 // 用于进入timer时临时存储所有寄存器
 uint64 timer_scratch[31];
 
@@ -34,6 +32,8 @@ void centry() {
     // 将所有 machine interrupt 代理给smode
     w_mideleg(0xffff);
     // 启动中断, external, timer, soft(和linux的软中断不同, 这个指的是软件)
+    // 例如ssip, smode soft interrupts, 可读写, 可以用来触发核间中断
+    // seip, smode external interrups, 只读
     w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
     /*
@@ -69,10 +69,10 @@ void centry() {
     setup_timer();
 
 
-    long p;
-    for (long i = 0; i < 1000000000L; i++) {
-        p += 1;
-    }
+    // long p;
+    // for (long i = 0; i < 1000000000L; i++) {
+    //     p += 1;
+    // }
 
 
     int id = r_mhartid();
@@ -127,8 +127,6 @@ void setup_timer() {
 void retrigger_timer() {
     int id = r_mhartid();
     int interval = 1000000; // cycles; about 1/10th second in qemu.
-
-    systick ++;
 
     // 触发smode的软中断
     w_sip(2);
