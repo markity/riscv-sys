@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "xv6debug",
+            "name": "debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/kernel",

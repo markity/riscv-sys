@@ -6,9 +6,10 @@ extern void setup_timer();
 
 char kernel_stack[4096];
 
-// 用于进入timer时临时存储所有寄存器
+uint64 systick = 0;
 
-uint64 timer_scratch[5];
+// 用于进入timer时临时存储所有寄存器
+uint64 timer_scratch[31];
 
 // entry.s -> centry.c
 
@@ -64,8 +65,14 @@ void centry() {
     // 如果在后面的一小段时间内产生中断, 此时是mmode, 在mret之前会给sip置位, 这会产生一个bug
     // 下面有一个耗时的代码片段, 可以自行测试
     // 测试方法, 在timervec和下面的w_tp处打断点, 发现会触发timervec后会回到w_tp处
-    // TODO: 修复这个bug,
+    // TODO: 修复这个bug, 已经修复, 见retrigger_timer
     setup_timer();
+
+
+    long p;
+    for (long i = 0; i < 1000000000L; i++) {
+        p += 1;
+    }
 
 
     int id = r_mhartid();
@@ -115,4 +122,27 @@ void setup_timer() {
 
     // enable machine-mode timer interrupts.
     w_mie(r_mie() | MIE_MTIE);
+}
+
+void retrigger_timer() {
+    int id = r_mhartid();
+    int interval = 1000000; // cycles; about 1/10th second in qemu.
+
+    systick ++;
+
+    // 触发smode的软中断
+    w_sip(2);
+    // 重新设置timer
+    *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;
+
+    unsigned long x = r_mstatus();
+    if ((x & MSTATUS_MPP_MASK) == MSTATUS_MPP_M) {
+        unsigned long x = r_mstatus();
+        x &= ~MSTATUS_MPP_MASK;
+        x |= MSTATUS_MPP_S;
+        w_mstatus(x);
+
+        // 将mepc(machine exception pc)设置成main, main是smode的程序入口, mret将会返回到这个位置
+        w_mepc((uint64)main);
+    }
 }
