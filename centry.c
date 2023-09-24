@@ -3,6 +3,7 @@
 extern void main();
 extern void timervec();
 extern void setup_timer();
+extern void smain();
 
 char kernel_stack[4096];
 
@@ -19,7 +20,7 @@ void centry() {
     w_mstatus(x);
 
     // 将mepc(machine exception pc)设置成main, main是smode的程序入口, mret将会返回到这个位置
-    w_mepc((uint64)main);
+    w_mepc((uint64)smain);
 
     // 关闭smode的虚拟地址, 访问的即为真实地址
     w_satp(0);
@@ -141,6 +142,6 @@ void retrigger_timer() {
         w_mstatus(x);
 
         // 将mepc(machine exception pc)设置成main, main是smode的程序入口, mret将会返回到这个位置
-        w_mepc((uint64)main);
+        w_mepc((uint64)smain);
     }
 }

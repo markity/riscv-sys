@@ -2,6 +2,10 @@
     "C_Cpp.errorSquiggles": "enabled",
     "files.associations": {
         "riscv.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "memlayout.h": "c",
+        "list.h": "c",
+        "list": "c",
+        "task.h": "c"
     }
 }
